@@ -1,0 +1,24 @@
+# ─── RUNE GENERATED FILES ─────────────────────────────────────
+/CLAUDE.md          ← root only
+/GEMINI.md          ← root only
+/AGENTS.md          ← root only
+
+/.github/copilot-instructions.md
+/.cursor/
+/.kiro/
+/core/
+
+# ─── OS FILES ─────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── EDITOR FILES ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ─── EXTENSIONS ───────────────────────────────────────────────
+/extensions/*.md
+!/extensions/README.md
