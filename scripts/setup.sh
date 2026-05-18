@@ -1,9 +1,6 @@
 #!/bin/bash
 
 # ─── CONFIGURATION ────────────────────────────────────────────
-WORKSPACE="$PWD"
-CORE="$WORKSPACE/core"
-EXTENSIONS="$WORKSPACE/extensions"
 REPO_URL="https://raw.githubusercontent.com/bhargava562/rune/main"
 TMP_DIR="/tmp/rune_templates_$$"
 
@@ -16,8 +13,18 @@ echo "  ██╔══██╗██║   ██║██║╚██╗██
 echo "  ██║  ██║╚██████╔╝██║ ╚████║███████╗"
 echo "  ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝"
 echo ""
-echo "  AI workspace setup"
-echo "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  AI workspace setup
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+echo ""
+read -p "  Enter project directory name (leave blank for current directory): " PROJECT_NAME
+if [ -n "$PROJECT_NAME" ]; then
+  mkdir -p "$PROJECT_NAME"
+  cd "$PROJECT_NAME" || exit 1
+fi
+WORKSPACE="$PWD"
+CORE="$WORKSPACE/core"
+EXTENSIONS="$WORKSPACE/extensions"
 
 # ─── PLATFORM DETECTION ───────────────────────────────────────
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
@@ -102,13 +109,36 @@ echo "  ✓ Templates downloaded"
 
 # ─── STEP 3: GENERATE CORE ────────────────────────────────────
 echo ""
-echo "  ── Generating files in $WORKSPACE ───────────────────"
+echo "  ── Bootstrapping workspace in $WORKSPACE ────────────────"
 
 mkdir -p "$CORE"
+mkdir -p "$EXTENSIONS"
+
 cp "$TMP_DIR/AGENTS.md"  "$CORE/AGENTS.md"
 cp "$TMP_DIR/persona.md" "$CORE/persona.md"
 echo "  ✓ core/AGENTS.md generated"
 echo "  ✓ core/persona.md generated"
+
+if [ ! -f "$EXTENSIONS/README.md" ]; then
+  echo "Drop your custom .md files here to add team rules." > "$EXTENSIONS/README.md"
+  echo "  ✓ extensions/README.md generated"
+fi
+
+# Manage .gitignore
+GITIGNORE="$WORKSPACE/.gitignore"
+if ! grep -q "# rune - AI Workspace Configurations" "$GITIGNORE" 2>/dev/null; then
+  echo "" >> "$GITIGNORE"
+  echo "# rune - AI Workspace Configurations" >> "$GITIGNORE"
+  echo "core/" >> "$GITIGNORE"
+  echo "CLAUDE.md" >> "$GITIGNORE"
+  echo "GEMINI.md" >> "$GITIGNORE"
+  echo "AGENTS.md" >> "$GITIGNORE"
+  echo ".github/copilot-instructions.md" >> "$GITIGNORE"
+  echo ".cursor/" >> "$GITIGNORE"
+  echo ".kiro/" >> "$GITIGNORE"
+  echo "!extensions/" >> "$GITIGNORE"
+  echo "  ✓ .gitignore updated"
+fi
 
 # ─── EXTENSION MERGER ─────────────────────────────────────────
 merge_extensions() {

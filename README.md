@@ -136,7 +136,14 @@ rune/
     └── setup.sh            ← the only entry point
 ```
 
-The `rune` script fetches templates dynamically from the `templates/` directory on GitHub, merges your local `extensions/` (if any) on top, and writes the correctly formatted file for each selected tool into your current working directory. There is no need to clone this repository locally!
+The `rune` script acts as a powerful scaffolding tool:
+1. It prompts you for a project name (creating and entering the folder automatically if provided).
+2. It fetches templates dynamically from the `templates/` directory on GitHub.
+3. It securely bootstraps your `core/` files and a custom `extensions/` directory.
+4. It safely injects rules into your `.gitignore` to prevent AI configs from polluting your version control.
+5. It merges your local `extensions/` (if any) on top, and writes the correctly formatted file for each selected tool. 
+
+There is no need to clone this repository locally!
 
 ---
 
