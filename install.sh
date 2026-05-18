@@ -39,7 +39,7 @@ chmod +x "$INSTALL_DIR/rune"
 if [ "$OS_FAMILY" = "windows" ]; then
   {
     echo "@echo off"
-    echo "bash \"%~dp0\rune\" %*"
+    printf '%s\n' 'bash "%~dp0\rune" %*'
   } > "$INSTALL_DIR/rune.cmd"
   echo "  ✓ Generated rune.cmd wrapper for Windows CMD/PowerShell"
 fi
