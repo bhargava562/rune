@@ -43,13 +43,30 @@ Without these files, every tool starts blank — no style, no opinions, no memor
 
 ## Quick Start
 
+There are two ways to use `rune`:
+
+### Option A: The "Zero-Install" Run (Best for quick usage)
+Run `rune` directly from GitHub into your current project folder using a single curl command.
+
 ```bash
-git clone https://github.com/bhargava562/rune
-cd rune
-bash scripts/setup.sh
+# Run rune in your current project directory
+bash <(curl -fsSL https://raw.githubusercontent.com/bhargava562/rune/main/scripts/setup.sh)
 ```
 
-Pick your tools. `rune` generates the correct config file for each one — pre-loaded with senior engineer defaults.
+### Option B: The Global CLI Installation (Best for long-term use)
+To make it work exactly like a standalone package (where you just type `rune` in any terminal):
+
+```bash
+# Install rune globally
+curl -fsSL https://raw.githubusercontent.com/bhargava562/rune/main/install.sh | bash
+```
+
+Once installed, simply `cd` into any of your projects and type:
+```bash
+rune
+```
+
+Pick your tools. `rune` fetches the templates dynamically from GitHub and generates the correct config file for each one — pre-loaded with senior engineer defaults.
 
 ---
 
@@ -119,7 +136,7 @@ rune/
     └── setup.sh            ← the only entry point
 ```
 
-`setup.sh` generates `core/` from templates, merges your `extensions/` on top, then writes the correctly formatted file for each selected tool. Generated files are gitignored — every developer generates their own locally.
+The `rune` script fetches templates dynamically from the `templates/` directory on GitHub, merges your local `extensions/` (if any) on top, and writes the correctly formatted file for each selected tool into your current working directory. There is no need to clone this repository locally!
 
 ---
 
