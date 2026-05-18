@@ -3,12 +3,29 @@
 
 echo "Installing rune globally..."
 
+# OCP Platform Detection
+OS_FAMILY="linux"
+case "$(uname -s)" in
+  MINGW*|CYGWIN*|MSYS*)
+    OS_FAMILY="windows"
+    ;;
+  Darwin*)
+    OS_FAMILY="macos"
+    ;;
+  *)
+    OS_FAMILY="linux"
+    ;;
+esac
+
 # Define install directory
 INSTALL_DIR="/usr/local/bin"
-if [ ! -w "$INSTALL_DIR" ]; then
+if [ "$OS_FAMILY" = "windows" ] || [ ! -w "$INSTALL_DIR" ]; then
+  # Prefer local bin for Windows to avoid permission issues, or if standard bin is not writable
   INSTALL_DIR="$HOME/.local/bin"
   mkdir -p "$INSTALL_DIR"
-  echo "Warning: No sudo rights. Installing to $INSTALL_DIR instead."
+  if [ "$OS_FAMILY" != "windows" ]; then
+    echo "Warning: No sudo rights. Installing to $INSTALL_DIR instead."
+  fi
   echo "Make sure $INSTALL_DIR is in your PATH."
 fi
 
@@ -18,4 +35,13 @@ curl -fsSL https://raw.githubusercontent.com/bhargava562/rune/main/scripts/setup
 # Make it executable
 chmod +x "$INSTALL_DIR/rune"
 
-echo "✅ rune is installed! You can now run 'rune' from any project directory."
+# Generate Windows Wrapper if applicable
+if [ "$OS_FAMILY" = "windows" ]; then
+  {
+    echo "@echo off"
+    echo "bash \"%~dp0\rune\" %*"
+  } > "$INSTALL_DIR/rune.cmd"
+  echo "  ✓ Generated rune.cmd wrapper for Windows CMD/PowerShell"
+fi
+
+echo "✅ rune is installed! You can now run 'rune setup' from any project directory."

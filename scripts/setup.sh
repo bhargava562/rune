@@ -4,6 +4,12 @@
 REPO_URL="https://raw.githubusercontent.com/bhargava562/rune/main"
 TMP_DIR="/tmp/rune_templates_$$"
 
+# ─── ARGUMENT ROUTING ─────────────────────────────────────────
+if [ "$1" != "setup" ]; then
+  echo "Usage: rune setup - Initialize a new AI workspace"
+  exit 0
+fi
+
 # ─── DISPLAY ──────────────────────────────────────────────────
 echo ""
 echo "  ██████╗ ██╗   ██╗███╗   ██╗███████╗"
@@ -27,16 +33,20 @@ CORE="$WORKSPACE/core"
 EXTENSIONS="$WORKSPACE/extensions"
 
 # ─── PLATFORM DETECTION ───────────────────────────────────────
-if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-  PLATFORM="windows"
-  echo "  Platform: Windows (Git Bash)"
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-  PLATFORM="mac"
-  echo "  Platform: macOS"
-else
-  PLATFORM="linux"
-  echo "  Platform: Linux"
-fi
+case "$OSTYPE" in
+  msys*|cygwin*|mingw*)
+    PLATFORM="windows"
+    echo "  Platform: Windows"
+    ;;
+  darwin*)
+    PLATFORM="mac"
+    echo "  Platform: macOS"
+    ;;
+  *)
+    PLATFORM="linux"
+    echo "  Platform: Linux"
+    ;;
+esac
 
 # ─── HELPER: YES/NO PROMPT ────────────────────────────────────
 ask_consent() {
@@ -273,16 +283,16 @@ fi
 
 # Re-run graphify integrations if it's available
 if [ "$USE_GRAPHIFY" = true ]; then
-  echo "  Running graphify integrations..."
+  echo "  Configuring graphify for selected tools..."
   echo "$SELECTED" | while read -r tool; do
     tool=$(echo "$tool" | xargs)
     case "$tool" in
-      claude) run_graphify "graphify install" ;;
-      copilot) run_graphify "graphify install --platform copilot" ;;
-      cursor) run_graphify "graphify cursor install" ;;
-      antigravity) run_graphify "graphify antigravity install" ;;
-      kiro) run_graphify "graphify kiro install" ;;
-      opencode) run_graphify "graphify install --platform opencode" ;;
+      claude) run_graphify "graphify install" >/dev/null 2>&1 ;;
+      copilot) run_graphify "graphify install --platform copilot" >/dev/null 2>&1 ;;
+      cursor) run_graphify "graphify cursor install" >/dev/null 2>&1 ;;
+      antigravity) run_graphify "graphify antigravity install" >/dev/null 2>&1 ;;
+      kiro) run_graphify "graphify kiro install" >/dev/null 2>&1 ;;
+      opencode) run_graphify "graphify install --platform opencode" >/dev/null 2>&1 ;;
     esac
   done
 fi
@@ -301,10 +311,8 @@ if ask_consent "Install caveman token optimizer?"; then
   echo "  Installing caveman..."
   if [[ "$PLATFORM" == "windows" ]]; then
     # Windows PowerShell path
-    echo "  Run this in PowerShell to complete caveman install:"
-    echo "  irm https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.ps1 | iex"
-    echo ""
-    echo "  (caveman needs PowerShell on Windows — cannot auto-install from Git Bash)"
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.ps1 | iex"
+    echo "  ✓ caveman installed"
   else
     curl -fsSL \
       https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh \
