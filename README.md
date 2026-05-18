@@ -50,7 +50,7 @@ Run `rune` directly from GitHub into your current project folder using a single 
 
 ```bash
 # Run rune in your current project directory
-bash <(curl -fsSL https://raw.githubusercontent.com/bhargava562/rune/main/scripts/setup.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/bhargava562/rune/main/scripts/setup.sh) setup
 ```
 
 ### Option B: The Global CLI Installation (Best for long-term use)
@@ -63,7 +63,7 @@ curl -fsSL https://raw.githubusercontent.com/bhargava562/rune/main/install.sh | 
 
 Once installed, simply `cd` into any of your projects and type:
 ```bash
-rune
+rune setup
 ```
 
 Pick your tools. `rune` fetches the templates dynamically from GitHub and generates the correct config file for each one — pre-loaded with senior engineer defaults.
@@ -107,7 +107,7 @@ Always use async functions.
 Use snake_case. Never use print() — use logging.
 ```
 
-Run `setup.sh` again. Your rules merge on top. Core files stay untouched.
+Run `rune setup` again. Your rules merge on top. Core files stay untouched.
 Works for any stack, any team convention.
 
 ---
@@ -165,7 +165,7 @@ No other files change.
 [![macOS](https://img.shields.io/badge/macOS-000000?style=flat-square&logo=apple&logoColor=white)](https://www.apple.com/macos/)
 [![Windows](https://img.shields.io/badge/Windows%20(Git%20Bash)-0078D6?style=flat-square&logo=windows&logoColor=white)](https://gitforwindows.org/)
 
-Requires `bash` and `npm`. On Windows, use [Git Bash](https://gitforwindows.org/).
+Requires `bash` and `npm`. Works natively in macOS, Linux, and Windows (CMD, PowerShell, Git Bash).
 
 ---
 
