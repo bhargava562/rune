@@ -17,7 +17,7 @@ echo "  AI workspace setup
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 echo ""
-read -p "  Enter project directory name (leave blank for current directory): " PROJECT_NAME
+read -r -p "  Enter project directory name (leave blank for current directory): " PROJECT_NAME
 if [ -n "$PROJECT_NAME" ]; then
   mkdir -p "$PROJECT_NAME"
   cd "$PROJECT_NAME" || exit 1
@@ -42,7 +42,7 @@ fi
 ask_consent() {
   local question=$1
   while true; do
-    read -p "  $question (y/n): " yn
+    read -r -p "  $question (y/n): " yn
     case "$yn" in
       [Yy]*) return 0 ;;
       [Nn]*) return 1 ;;
@@ -66,7 +66,7 @@ echo ""
 echo "  Type tools space-separated (or 'all'):"
 echo "  Example: claude copilot cursor"
 echo ""
-read -p "  → " INPUT
+read -r -p "  → " INPUT
 
 if [ "$INPUT" = "all" ]; then
   SELECTED="$AVAILABLE_TOOLS"
@@ -93,7 +93,7 @@ if [ ! -s "$TMP_DIR/AGENTS.md" ] || [ ! -s "$TMP_DIR/persona.md" ]; then
 fi
 
 # Fetch specific adapters
-echo "$SELECTED" | while read tool; do
+echo "$SELECTED" | while read -r tool; do
   tool=$(echo "$tool" | xargs)
   [ -z "$tool" ] && continue
   
@@ -127,16 +127,18 @@ fi
 # Manage .gitignore
 GITIGNORE="$WORKSPACE/.gitignore"
 if ! grep -q "# rune - AI Workspace Configurations" "$GITIGNORE" 2>/dev/null; then
-  echo "" >> "$GITIGNORE"
-  echo "# rune - AI Workspace Configurations" >> "$GITIGNORE"
-  echo "core/" >> "$GITIGNORE"
-  echo "CLAUDE.md" >> "$GITIGNORE"
-  echo "GEMINI.md" >> "$GITIGNORE"
-  echo "AGENTS.md" >> "$GITIGNORE"
-  echo ".github/copilot-instructions.md" >> "$GITIGNORE"
-  echo ".cursor/" >> "$GITIGNORE"
-  echo ".kiro/" >> "$GITIGNORE"
-  echo "!extensions/" >> "$GITIGNORE"
+  {
+    echo ""
+    echo "# rune - AI Workspace Configurations"
+    echo "core/"
+    echo "CLAUDE.md"
+    echo "GEMINI.md"
+    echo "AGENTS.md"
+    echo ".github/copilot-instructions.md"
+    echo ".cursor/"
+    echo ".kiro/"
+    echo "!extensions/"
+  } >> "$GITIGNORE"
   echo "  ✓ .gitignore updated"
 fi
 
@@ -148,9 +150,11 @@ merge_extensions() {
     for f in "$EXTENSIONS"/*.md; do
       [[ "$(basename "$f")" == "README.md" ]] && continue
       [ -f "$f" ] || continue
-      echo "" >> "$target"
-      echo "## Extension: $(basename "$f" .md)" >> "$target"
-      cat "$f" >> "$target"
+      {
+        echo ""
+        echo "## Extension: $(basename "$f" .md)"
+        cat "$f"
+      } >> "$target"
       found=1
     done
   fi
@@ -162,7 +166,7 @@ echo ""
 echo "  ── Configuring tools ────────────────────────────────"
 echo ""
 
-echo "$SELECTED" | while read tool; do
+echo "$SELECTED" | while read -r tool; do
   tool=$(echo "$tool" | xargs)
   [ -z "$tool" ] && continue
 
@@ -176,11 +180,13 @@ echo "$SELECTED" | while read tool; do
 
   # Merge: AGENTS.md + persona.md + tool-specific template
   MERGED=$(mktemp)
-  cat "$CORE/AGENTS.md"  >> "$MERGED"
-  echo ""                >> "$MERGED"
-  cat "$CORE/persona.md" >> "$MERGED"
-  echo ""                >> "$MERGED"
-  cat "$TMPL"            >> "$MERGED"
+  {
+    cat "$CORE/AGENTS.md"
+    echo ""
+    cat "$CORE/persona.md"
+    echo ""
+    cat "$TMPL"
+  } >> "$MERGED"
 
   case "$tool" in
     claude)
@@ -268,7 +274,7 @@ fi
 # Re-run graphify integrations if it's available
 if [ "$USE_GRAPHIFY" = true ]; then
   echo "  Running graphify integrations..."
-  echo "$SELECTED" | while read tool; do
+  echo "$SELECTED" | while read -r tool; do
     tool=$(echo "$tool" | xargs)
     case "$tool" in
       claude) run_graphify "graphify install" ;;
