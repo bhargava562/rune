@@ -4,9 +4,58 @@
 REPO_URL="https://raw.githubusercontent.com/bhargava562/rune/main"
 TMP_DIR="/tmp/rune_templates_$$"
 
+# ─── HELPER FUNCTIONS ─────────────────────────────────────────
+install_skills() {
+  local REGISTRY_URL="$REPO_URL/scripts/registry.txt"
+  local TMP_REGISTRY="/tmp/rune_registry.txt"
+
+  if [ $# -eq 0 ]; then
+    echo "  ✗ Please specify at least one skill to install."
+    return 1
+  fi
+
+  echo ""
+  echo "  ── Installing skills ────────────────────────────────"
+  
+  # Silently download registry.txt
+  curl -sS "$REGISTRY_URL" -o "$TMP_REGISTRY"
+  if [ ! -s "$TMP_REGISTRY" ]; then
+    echo "  ✗ Failed to download registry.txt from GitHub."
+    return 1
+  fi
+
+  mkdir -p "$WORKSPACE/.rune/skills"
+
+  for skill in "$@"; do
+    local url=$(grep "^${skill}[[:space:]]" "$TMP_REGISTRY" | awk '{print $2}')
+    
+    if [ -n "$url" ]; then
+      curl -sS "$url" -o "$WORKSPACE/.rune/skills/${skill}.md"
+      if [ -s "$WORKSPACE/.rune/skills/${skill}.md" ]; then
+        echo "  ✓ ${skill} installed"
+      else
+        echo "  ✗ Failed to download skill: ${skill}"
+        rm -f "$WORKSPACE/.rune/skills/${skill}.md"
+      fi
+    else
+      echo "  ✗ unknown skill: ${skill}"
+    fi
+  done
+  
+  rm -f "$TMP_REGISTRY"
+}
+
 # ─── ARGUMENT ROUTING ─────────────────────────────────────────
-if [ "$1" != "setup" ]; then
-  echo "Usage: rune setup - Initialize a new AI workspace"
+WORKSPACE="$PWD"
+
+if [ "$1" = "install" ]; then
+  shift
+  install_skills "$@"
+  exit 0
+elif [ "$1" != "setup" ]; then
+  echo "Usage:"
+  echo "  rune setup                - Initialize a new AI workspace"
+  echo "  rune install <skills...>  - Install skills from the registry"
   exit 0
 fi
 
@@ -29,8 +78,9 @@ if [ -n "$PROJECT_NAME" ]; then
   cd "$PROJECT_NAME" || exit 1
 fi
 WORKSPACE="$PWD"
-CORE="$WORKSPACE/core"
-EXTENSIONS="$WORKSPACE/extensions"
+RUNE_DIR="$WORKSPACE/.rune"
+CORE="$RUNE_DIR/core"
+SKILLS="$RUNE_DIR/skills"
 
 # ─── PLATFORM DETECTION ───────────────────────────────────────
 case "$OSTYPE" in
@@ -84,11 +134,15 @@ else
   SELECTED=$(echo "$INPUT" | tr ' ' '\n')
 fi
 
+echo ""
+echo "  ── Skill selection ──────────────────────────────────"
+echo ""
+echo "  Type skills to install now (e.g. react springboot) or leave blank:"
+read -r -p "  → " SKILLS_INPUT
+
 # ─── STEP 2: FETCH TEMPLATES ──────────────────────────────────
 echo ""
 echo "  ── Fetching templates ───────────────────────────────"
-
-mkdir -p "$TMP_DIR/adapters"
 
 # Fetch Core templates
 echo "  Downloading core templates..."
@@ -102,19 +156,6 @@ if [ ! -s "$TMP_DIR/AGENTS.md" ] || [ ! -s "$TMP_DIR/persona.md" ]; then
   exit 1
 fi
 
-# Fetch specific adapters
-echo "$SELECTED" | while read -r tool; do
-  tool=$(echo "$tool" | xargs)
-  [ -z "$tool" ] && continue
-  
-  # Only fetch if it's one of the known tools to avoid 404s breaking things
-  if echo "$AVAILABLE_TOOLS" | grep -qw "$tool"; then
-    curl -sS "$REPO_URL/templates/adapters/$tool.md" -o "$TMP_DIR/adapters/$tool.md"
-  else
-    echo "  ✗ Unknown tool: $tool"
-  fi
-done
-
 echo "  ✓ Templates downloaded"
 
 # ─── STEP 3: GENERATE CORE ────────────────────────────────────
@@ -122,16 +163,16 @@ echo ""
 echo "  ── Bootstrapping workspace in $WORKSPACE ────────────────"
 
 mkdir -p "$CORE"
-mkdir -p "$EXTENSIONS"
+mkdir -p "$SKILLS"
 
 cp "$TMP_DIR/AGENTS.md"  "$CORE/AGENTS.md"
 cp "$TMP_DIR/persona.md" "$CORE/persona.md"
-echo "  ✓ core/AGENTS.md generated"
-echo "  ✓ core/persona.md generated"
+echo "  ✓ .rune/core/AGENTS.md generated"
+echo "  ✓ .rune/core/persona.md generated"
 
-if [ ! -f "$EXTENSIONS/README.md" ]; then
-  echo "Drop your custom .md files here to add team rules." > "$EXTENSIONS/README.md"
-  echo "  ✓ extensions/README.md generated"
+if [ ! -f "$SKILLS/README.md" ]; then
+  echo "Drop your custom .md files here to add team rules." > "$SKILLS/README.md"
+  echo "  ✓ .rune/skills/README.md generated"
 fi
 
 # Manage .gitignore
@@ -140,105 +181,66 @@ if ! grep -q "# rune - AI Workspace Configurations" "$GITIGNORE" 2>/dev/null; th
   {
     echo ""
     echo "# rune - AI Workspace Configurations"
-    echo "core/"
+    echo ".rune/core/"
     echo "CLAUDE.md"
     echo "GEMINI.md"
-    echo "AGENTS.md"
     echo ".github/copilot-instructions.md"
     echo ".cursor/"
     echo ".kiro/"
-    echo "!extensions/"
   } >> "$GITIGNORE"
   echo "  ✓ .gitignore updated"
 fi
-
-# ─── EXTENSION MERGER ─────────────────────────────────────────
-merge_extensions() {
-  local target=$1
-  local found=0
-  if [ -d "$EXTENSIONS" ]; then
-    for f in "$EXTENSIONS"/*.md; do
-      [[ "$(basename "$f")" == "README.md" ]] && continue
-      [ -f "$f" ] || continue
-      {
-        echo ""
-        echo "## Extension: $(basename "$f" .md)"
-        cat "$f"
-      } >> "$target"
-      found=1
-    done
-  fi
-  [ $found -eq 1 ] && echo "  ✓ extensions merged"
-}
 
 # ─── STEP 4: CONFIGURE SELECTED TOOLS ─────────────────────────
 echo ""
 echo "  ── Configuring tools ────────────────────────────────"
 echo ""
 
+POINTER_TEXT="You are an AI assistant powered by Rune. Your persona and agents are defined in \`.rune/core/\`. The technical stack rules you must follow are located in \`.rune/skills/\`. Read them before coding."
+
 echo "$SELECTED" | while read -r tool; do
   tool=$(echo "$tool" | xargs)
   [ -z "$tool" ] && continue
 
-  TMPL="$TMP_DIR/adapters/$tool.md"
-
-  if [ ! -f "$TMPL" ]; then
-    continue
-  fi
-
   echo "  Setting up $tool..."
-
-  # Merge: AGENTS.md + persona.md + tool-specific template
-  MERGED=$(mktemp)
-  {
-    cat "$CORE/AGENTS.md"
-    echo ""
-    cat "$CORE/persona.md"
-    echo ""
-    cat "$TMPL"
-  } >> "$MERGED"
 
   case "$tool" in
     claude)
-      cp "$MERGED" "$WORKSPACE/CLAUDE.md"
-      merge_extensions "$WORKSPACE/CLAUDE.md"
+      echo "$POINTER_TEXT" > "$WORKSPACE/CLAUDE.md"
       echo "  ✓ CLAUDE.md written"
       ;;
     copilot)
       mkdir -p "$WORKSPACE/.github"
-      cp "$MERGED" "$WORKSPACE/.github/copilot-instructions.md"
-      merge_extensions "$WORKSPACE/.github/copilot-instructions.md"
+      echo "$POINTER_TEXT" > "$WORKSPACE/.github/copilot-instructions.md"
       echo "  ✓ .github/copilot-instructions.md written"
       ;;
     cursor)
       mkdir -p "$WORKSPACE/.cursor/rules"
-      cp "$MERGED" "$WORKSPACE/.cursor/rules/base.mdc"
-      merge_extensions "$WORKSPACE/.cursor/rules/base.mdc"
+      echo "$POINTER_TEXT" > "$WORKSPACE/.cursor/rules/base.mdc"
       echo "  ✓ .cursor/rules/base.mdc written"
       ;;
     antigravity)
-      cp "$MERGED" "$WORKSPACE/GEMINI.md"
-      merge_extensions "$WORKSPACE/GEMINI.md"
+      echo "$POINTER_TEXT" > "$WORKSPACE/GEMINI.md"
       echo "  ✓ GEMINI.md written"
       ;;
     kiro)
       mkdir -p "$WORKSPACE/.kiro/steering"
-      printf -- "---\ninclusion: always\n---\n\n" \
-        > "$WORKSPACE/.kiro/steering/rune.md"
-      cat "$MERGED" >> "$WORKSPACE/.kiro/steering/rune.md"
-      merge_extensions "$WORKSPACE/.kiro/steering/rune.md"
+      printf -- "---\ninclusion: always\n---\n\n" > "$WORKSPACE/.kiro/steering/rune.md"
+      echo "$POINTER_TEXT" >> "$WORKSPACE/.kiro/steering/rune.md"
       echo "  ✓ .kiro/steering/rune.md written"
       ;;
     opencode)
       mkdir -p ~/.config/opencode
-      cp "$MERGED" ~/.config/opencode/AGENTS.md
-      merge_extensions ~/.config/opencode/AGENTS.md
+      echo "$POINTER_TEXT" > ~/.config/opencode/AGENTS.md
       echo "  ✓ ~/.config/opencode/AGENTS.md written"
       ;;
   esac
-
-  rm -f "$MERGED"
 done
+
+# Install initial skills
+if [ -n "$SKILLS_INPUT" ]; then
+  install_skills $SKILLS_INPUT
+fi
 
 # Clean up tmp
 rm -rf "$TMP_DIR"
@@ -329,8 +331,9 @@ echo ""
 echo "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  ✅ rune is ready in $WORKSPACE"
 echo ""
-echo "  To reconfigure:  rune"
-echo "  To extend:       drop a .md in extensions/"
+echo "  To reconfigure:  rune setup"
+echo "  To add skills:   rune install <skill>"
+echo "  To extend:       drop a .md in .rune/skills/"
 if [ "$USE_CAVEMAN" = false ]; then
   echo "  Token savings:   install caveman → github.com/JuliusBrussee/caveman"
 fi
