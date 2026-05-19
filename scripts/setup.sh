@@ -27,7 +27,8 @@ install_skills() {
   mkdir -p "$WORKSPACE/.rune/skills"
 
   for skill in "$@"; do
-    local url=$(grep "^${skill}[[:space:]]" "$TMP_REGISTRY" | awk '{print $2}')
+    local url
+    url=$(grep "^${skill}[[:space:]]" "$TMP_REGISTRY" | awk '{print $2}')
     
     if [ -n "$url" ]; then
       curl -sS "$url" -o "$WORKSPACE/.rune/skills/${skill}.md"
@@ -239,6 +240,7 @@ done
 
 # Install initial skills
 if [ -n "$SKILLS_INPUT" ]; then
+  # shellcheck disable=SC2086
   install_skills $SKILLS_INPUT
 fi
 
