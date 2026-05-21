@@ -27,6 +27,13 @@ if [ "$OS_FAMILY" = "windows" ] || [ ! -w "$INSTALL_DIR" ]; then
     echo "Warning: No sudo rights. Installing to $INSTALL_DIR instead."
   fi
   echo "Make sure $INSTALL_DIR is in your PATH."
+  echo "  Add to PATH by running:"
+  if [ "$OS_FAMILY" = "windows" ]; then
+    echo "    echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc && source ~/.bashrc"
+  else
+    echo "    echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc && source ~/.bashrc"
+    echo "    (or ~/.zshrc if you use zsh)"
+  fi
 fi
 
 # Download the setup script directly to the bin folder

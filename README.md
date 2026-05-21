@@ -108,15 +108,20 @@ When you run `rune setup`, it creates the following architecture:
 your-project/
 ├── .rune/                         
 │   ├── core/                      ← Shared Persona & AGENTS.md
-│   ├── skills/                    ← Universal text-based text skills (pulled from ECC)
+│   ├── skills/                    ← Universal framework/language skills (pulled from registry)
 │   └── memory/                    
 │       └── project-context.md     ← The Shared Brain State
 ├── .agents/                       ← Generated rules directory
-│   └── rules/                     ← Guided by Rune instructions
-├── CLAUDE.md                      ← Pointer to .rune/
-├── .cursorrules                   ← Pointer to .rune/
-└── .github/
-    └── copilot-instructions.md    ← Pointer to .rune/
+│   └── rules/
+│       └── rune.md                ← Guided by Rune instructions
+├── .cursor/                       ← Cursor configuration directory
+│   └── rules/
+│       └── base.mdc               ← Cursor instruction pointer
+├── .github/
+│   └── copilot-instructions.md    ← Copilot instructions pointer
+├── CLAUDE.md                      ← Claude Code instructions pointer
+├── GEMINI.md                      ← Antigravity CLI instructions pointer
+└── .cursorrules                   ← Legacy Cursor rules pointer
 ```
 
 ### Why this makes `rune` elite:
