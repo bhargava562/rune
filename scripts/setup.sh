@@ -191,6 +191,7 @@ echo "  ✓ .rune/core/persona.md generated"
 
 AGENTS_CONTENT=$(cat "$CORE/AGENTS.md")
 PERSONA_CONTENT=$(cat "$CORE/persona.md")
+# shellcheck disable=SC2034
 POINTER_TEXT="$AGENTS_CONTENT
 
 $PERSONA_CONTENT
