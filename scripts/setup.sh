@@ -81,6 +81,10 @@ install_skills() {
     url=$(grep "^${skill}[[:space:]]" "$TMP_REGISTRY" | awk '{print $2}')
     
     if [ -n "$url" ]; then
+      if [[ "$url" != https://raw.githubusercontent.com/* ]]; then
+        echo "  ✗ $skill — untrusted URL blocked"
+        continue
+      fi
       curl -fsSL "$url" -o "$WORKSPACE/.rune/skills/${skill}.md"
       if [ -s "$WORKSPACE/.rune/skills/${skill}.md" ]; then
         echo "  ✓ ${skill} installed successfully"
