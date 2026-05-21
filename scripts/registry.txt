@@ -1,1 +1,1 @@
-react	https://raw.githubusercontent.com/affaan-m/ecc/main/skills/frontend-patterns/SKILL.md
+react	https://raw.githubusercontent.com/affaan-m/everything-claude-code/main/skills/frontend-patterns/SKILL.md

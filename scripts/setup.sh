@@ -7,6 +7,48 @@ if [ -z "$BASH_VERSION" ]; then
   exit 1
 fi
 
+# ─── UPDATE CHECK ─────────────────────────────────────────────
+RUNE_STAMP_FILE="$HOME/.rune_last_update_check"
+RUNE_CURRENT_VERSION="1.0.0"
+
+check_for_update() {
+  # Only check once per 24 hours
+  local now
+  now=$(date +%s)
+  local last_check=0
+
+  if [ -f "$RUNE_STAMP_FILE" ]; then
+    last_check=$(cat "$RUNE_STAMP_FILE" 2>/dev/null || echo 0)
+  fi
+
+  local elapsed=$(( now - last_check ))
+  # 86400 = 24 hours in seconds
+  if [ "$elapsed" -lt 86400 ]; then
+    return 0
+  fi
+
+  # Write timestamp now — before network call
+  # So even if network fails, we don't hammer GitHub
+  echo "$now" > "$RUNE_STAMP_FILE"
+
+  # Fetch latest version silently — 3 second timeout
+  local latest
+  latest=$(curl -fsSL --max-time 3 \
+    "$REPO_URL/VERSION" 2>/dev/null | tr -d '[:space:]')
+
+  # If fetch failed or empty — silent, no error shown
+  [ -z "$latest" ] && return 0
+
+  # Compare versions
+  if [ "$latest" != "$RUNE_CURRENT_VERSION" ]; then
+    echo ""
+    echo "  ─────────────────────────────────────────────────"
+    echo "  💡 rune $latest is available (you have $RUNE_CURRENT_VERSION)"
+    echo "     Update: curl -fsSL https://raw.githubusercontent.com/bhargava562/rune/main/install.sh | bash"
+    echo "  ─────────────────────────────────────────────────"
+  fi
+}
+
 # ─── CONFIGURATION ────────────────────────────────────────────
 REPO_URL="https://raw.githubusercontent.com/bhargava562/rune/main"
 TMP_DIR="/tmp/rune_templates_$$"
@@ -437,6 +479,9 @@ fi
 
 # Clean up tmp
 rm -rf "$TMP_DIR"
+
+# ─── UPDATE CHECK (non-blocking) ──────────────────────────────
+check_for_update
 
 # ─── DONE ─────────────────────────────────────────────────────
 echo ""
