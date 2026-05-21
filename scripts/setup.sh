@@ -189,6 +189,16 @@ cp "$TMP_DIR/persona.md" "$CORE/persona.md"
 echo "  ✓ .rune/core/AGENTS.md generated"
 echo "  ✓ .rune/core/persona.md generated"
 
+AGENTS_CONTENT=$(cat "$CORE/AGENTS.md")
+PERSONA_CONTENT=$(cat "$CORE/persona.md")
+POINTER_TEXT="$AGENTS_CONTENT
+
+$PERSONA_CONTENT
+
+## Workspace Context
+Read .rune/memory/project-context.md before writing code.
+Update the ADR section after architectural decisions."
+
 if [ ! -f "$SKILLS/README.md" ]; then
   echo "Drop your custom .md files here to add team rules." > "$SKILLS/README.md"
   echo "  ✓ .rune/skills/README.md generated"
@@ -218,6 +228,7 @@ if ! grep -q "# rune - AI Workspace Configurations" "$GITIGNORE" 2>/dev/null; th
     echo ".cursor/"
     echo ".cursorrules"
     echo ".kiro/"
+    echo ".agents/"
   } >> "$GITIGNORE"
   echo "  ✓ .gitignore updated"
 fi
@@ -227,10 +238,6 @@ echo ""
 echo "  ── Configuring tools ────────────────────────────────"
 echo ""
 
-POINTER_TEXT="You are an AI assistant powered by Rune. Your persona and agents are defined in \`.rune/core/\`. The technical stack rules you must follow are located in \`.rune/skills/\`. Read them before coding.
-
-CRITICAL WORKSPACE GOVERNANCE: You share this repository with independent AI agents (Claude Code, Cursor, Antigravity CLI). To avoid context drift, you MUST read \`.rune/memory/project-context.md\` to understand the state before writing code. Upon completing a feature or making an architectural change, you are REQUIRED to append your decision to the ADR section of \`.rune/memory/project-context.md\` so other agents sync instantly."
-
 echo "$SELECTED" | while read -r tool; do
   tool=$(echo "$tool" | xargs)
   [ -z "$tool" ] && continue
@@ -239,41 +246,113 @@ echo "$SELECTED" | while read -r tool; do
 
   case "$tool" in
     claude)
-      echo "$POINTER_TEXT" > "$WORKSPACE/CLAUDE.md"
+      curl -sS "$REPO_URL/templates/adapters/claude.md" -o "$TMP_DIR/adapter_claude.md" 2>/dev/null
+      {
+        cat "$CORE/AGENTS.md"
+        echo ""
+        cat "$CORE/persona.md"
+        echo ""
+        [ -s "$TMP_DIR/adapter_claude.md" ] && cat "$TMP_DIR/adapter_claude.md"
+        echo ""
+        echo "## Workspace Context"
+        echo "Read .rune/memory/project-context.md before writing code."
+        echo "Update the ADR section after architectural decisions."
+      } > "$WORKSPACE/CLAUDE.md"
       echo "  ✓ CLAUDE.md written"
       ;;
     copilot)
       mkdir -p "$WORKSPACE/.github"
-      echo "$POINTER_TEXT" > "$WORKSPACE/.github/copilot-instructions.md"
+      curl -sS "$REPO_URL/templates/adapters/copilot.md" -o "$TMP_DIR/adapter_copilot.md" 2>/dev/null
+      {
+        cat "$CORE/AGENTS.md"
+        echo ""
+        cat "$CORE/persona.md"
+        echo ""
+        [ -s "$TMP_DIR/adapter_copilot.md" ] && cat "$TMP_DIR/adapter_copilot.md"
+        echo ""
+        echo "## Workspace Context"
+        echo "Read .rune/memory/project-context.md before writing code."
+        echo "Update the ADR section after architectural decisions."
+      } > "$WORKSPACE/.github/copilot-instructions.md"
       echo "  ✓ .github/copilot-instructions.md written"
       ;;
     cursor)
       mkdir -p "$WORKSPACE/.cursor/rules"
-      echo "$POINTER_TEXT" > "$WORKSPACE/.cursor/rules/base.mdc"
+      curl -sS "$REPO_URL/templates/adapters/cursor.md" -o "$TMP_DIR/adapter_cursor.md" 2>/dev/null
+      {
+        cat "$CORE/AGENTS.md"
+        echo ""
+        cat "$CORE/persona.md"
+        echo ""
+        [ -s "$TMP_DIR/adapter_cursor.md" ] && cat "$TMP_DIR/adapter_cursor.md"
+        echo ""
+        echo "## Workspace Context"
+        echo "Read .rune/memory/project-context.md before writing code."
+        echo "Update the ADR section after architectural decisions."
+      } > "$TMP_DIR/merged_cursor.md"
+      cat "$TMP_DIR/merged_cursor.md" > "$WORKSPACE/.cursor/rules/base.mdc"
       echo "  ✓ .cursor/rules/base.mdc written"
-      echo "$POINTER_TEXT" > "$WORKSPACE/.cursorrules"
+      cat "$TMP_DIR/merged_cursor.md" > "$WORKSPACE/.cursorrules"
       echo "  ✓ .cursorrules written"
       ;;
     antigravity)
-      echo "$POINTER_TEXT" > "$WORKSPACE/GEMINI.md"
+      curl -sS "$REPO_URL/templates/adapters/antigravity.md" -o "$TMP_DIR/adapter_antigravity.md" 2>/dev/null
+      {
+        cat "$CORE/AGENTS.md"
+        echo ""
+        cat "$CORE/persona.md"
+        echo ""
+        [ -s "$TMP_DIR/adapter_antigravity.md" ] && cat "$TMP_DIR/adapter_antigravity.md"
+        echo ""
+        echo "## Workspace Context"
+        echo "Read .rune/memory/project-context.md before writing code."
+        echo "Update the ADR section after architectural decisions."
+      } > "$TMP_DIR/merged_antigravity.md"
+      cat "$TMP_DIR/merged_antigravity.md" > "$WORKSPACE/GEMINI.md"
       echo "  ✓ GEMINI.md written"
-      mkdir -p "$WORKSPACE/.antigravitycli/state"
-      echo "$POINTER_TEXT" > "$WORKSPACE/.antigravitycli/state/instructions.md"
-      echo "  ✓ .antigravitycli/state/instructions.md written"
+      mkdir -p "$WORKSPACE/.agents/rules"
+      cat "$TMP_DIR/merged_antigravity.md" > "$WORKSPACE/.agents/rules/rune.md"
+      echo "  ✓ .agents/rules/rune.md written"
       ;;
     kiro)
       mkdir -p "$WORKSPACE/.kiro/steering"
-      printf -- "---\ninclusion: always\n---\n\n" > "$WORKSPACE/.kiro/steering/rune.md"
-      echo "$POINTER_TEXT" >> "$WORKSPACE/.kiro/steering/rune.md"
+      curl -sS "$REPO_URL/templates/adapters/kiro.md" -o "$TMP_DIR/adapter_kiro.md" 2>/dev/null
+      {
+        printf -- "---\ninclusion: always\n---\n\n"
+        cat "$CORE/AGENTS.md"
+        echo ""
+        cat "$CORE/persona.md"
+        echo ""
+        [ -s "$TMP_DIR/adapter_kiro.md" ] && cat "$TMP_DIR/adapter_kiro.md"
+        echo ""
+        echo "## Workspace Context"
+        echo "Read .rune/memory/project-context.md before writing code."
+        echo "Update the ADR section after architectural decisions."
+      } > "$WORKSPACE/.kiro/steering/rune.md"
       echo "  ✓ .kiro/steering/rune.md written"
       ;;
     opencode)
       mkdir -p ~/.config/opencode
-      echo "$POINTER_TEXT" > ~/.config/opencode/AGENTS.md
+      curl -sS "$REPO_URL/templates/adapters/opencode.md" -o "$TMP_DIR/adapter_opencode.md" 2>/dev/null
+      {
+        cat "$CORE/AGENTS.md"
+        echo ""
+        cat "$CORE/persona.md"
+        echo ""
+        [ -s "$TMP_DIR/adapter_opencode.md" ] && cat "$TMP_DIR/adapter_opencode.md"
+        echo ""
+        echo "## Workspace Context"
+        echo "Read .rune/memory/project-context.md before writing code."
+        echo "Update the ADR section after architectural decisions."
+      } > ~/.config/opencode/AGENTS.md
       echo "  ✓ ~/.config/opencode/AGENTS.md written"
+      ;;
+    *)
+      echo "  ✗ $tool — no template found, skipping"
       ;;
   esac
 done
+
 
 # Install initial skills
 if [ -n "$SKILLS_INPUT" ]; then
@@ -377,7 +456,7 @@ echo "  To reconfigure:  rune setup"
 echo "  To add skills:   rune install <skill>"
 echo "  To sync agents:  tell them to update .rune/memory/project-context.md"
 echo "  To extend:       drop a .md in .rune/skills/"
-if [ "$USE_CAVEMAN" = false ]; then
+if [[ "$USE_C" =~ ^[Nn]$ ]]; then
   echo "  Token savings:   install caveman → github.com/JuliusBrussee/caveman"
 fi
 echo ""

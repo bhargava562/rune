@@ -1,5 +1,1 @@
 react	https://raw.githubusercontent.com/affaan-m/ecc/main/skills/frontend-patterns/SKILL.md
-springboot	https://raw.githubusercontent.com/affaan-m/ecc/main/skills/backend-springboot/SKILL.md
-python	https://raw.githubusercontent.com/affaan-m/ecc/main/skills/python-core/SKILL.md
-go	https://raw.githubusercontent.com/affaan-m/ecc/main/skills/go-patterns/SKILL.md
-django	https://raw.githubusercontent.com/affaan-m/ecc/main/skills/django-backend/SKILL.md
