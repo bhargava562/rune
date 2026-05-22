@@ -112,10 +112,28 @@ if [ "$1" = "install" ]; then
   done
   install_skills "${clean_args[@]}"
   exit 0
+elif [ "$1" = "list" ]; then
+  echo ""
+  echo "  Available skills:"
+  echo ""
+  TMP_LIST="/tmp/rune_list_$$"
+  curl -fsSL "$REPO_URL/scripts/registry.txt" -o "$TMP_LIST" 2>/dev/null
+  if [ -s "$TMP_LIST" ]; then
+    while read -r name url; do
+      [ -z "$name" ] && continue
+      printf "    %-20s %s\n" "$name" "$url"
+    done < "$TMP_LIST"
+    rm -f "$TMP_LIST"
+  else
+    echo "  ✗ Could not fetch registry"
+  fi
+  echo ""
+  exit 0
 elif [ "$1" != "setup" ]; then
   echo "Usage:"
   echo "  rune setup                - Initialize a new AI workspace"
   echo "  rune install <skills...>  - Install skills from the registry"
+  echo "  rune list                 - List available skills in the registry"
   exit 0
 fi
 

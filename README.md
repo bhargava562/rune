@@ -118,6 +118,14 @@ Generated files are gitignored. Every developer on your team runs `rune setup` a
 
 ## Installing framework skills
 
+To view all available skills in the registry:
+
+```bash
+rune list
+```
+
+To install a skill (for example, `react`):
+
 ```bash
 rune install react
 ```
