@@ -7,6 +7,11 @@ if [ -z "$BASH_VERSION" ]; then
   exit 1
 fi
 
+# ─── CONFIGURATION ────────────────────────────────────────────
+# Must be defined BEFORE argument routing (list/install use it)
+REPO_URL="https://raw.githubusercontent.com/bhargava562/rune/main"
+TMP_DIR="/tmp/rune_templates_$$"
+
 # ─── UPDATE CHECK ─────────────────────────────────────────────
 RUNE_STAMP_FILE="$HOME/.rune_last_update_check"
 RUNE_CURRENT_VERSION="1.0.0"
@@ -49,9 +54,7 @@ check_for_update() {
   fi
 }
 
-# ─── CONFIGURATION ────────────────────────────────────────────
-REPO_URL="https://raw.githubusercontent.com/bhargava562/rune/main"
-TMP_DIR="/tmp/rune_templates_$$"
+
 
 # ─── HELPER FUNCTIONS ─────────────────────────────────────────
 install_skills() {
