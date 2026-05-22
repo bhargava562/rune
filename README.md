@@ -73,22 +73,16 @@ Every config file gets the same professional engineering persona — senior engi
 
 ## Quick start
 
-**Run once in any project (no install required):**
+Run in any project directory:
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/bhargava562/rune/main/scripts/setup.sh) setup
 ```
 
-**Or install globally and use anywhere:**
+**Want `rune` as a global command?**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/bhargava562/rune/main/install.sh | bash
-```
-
-Then in any project:
-
-```bash
-rune setup
 ```
 
 ---

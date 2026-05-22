@@ -12,6 +12,15 @@ fi
 REPO_URL="https://raw.githubusercontent.com/bhargava562/rune/main"
 TMP_DIR="/tmp/rune_templates_$$"
 
+# ─── CLEANUP TRAP ─────────────────────────────────────────────
+cleanup() {
+  rm -rf "$TMP_DIR" \
+         /tmp/rune_registry_$$ \
+         /tmp/rune_list_$$ \
+         /tmp/rune_pip_err_$$
+}
+trap cleanup EXIT INT TERM
+
 # ─── UPDATE CHECK ─────────────────────────────────────────────
 RUNE_STAMP_FILE="$HOME/.rune_last_update_check"
 RUNE_CURRENT_VERSION="1.0.0"
@@ -180,6 +189,19 @@ case "$OSTYPE" in
     ;;
 esac
 
+# ─── CONNECTIVITY CHECK ───────────────────────────────────────
+echo ""
+echo "  Checking connectivity..."
+if ! curl -fsSL --max-time 5 \
+  "https://raw.githubusercontent.com" \
+  -o /dev/null 2>/dev/null; then
+  echo "  ✗ No internet connection."
+  echo "    Check your connection and try again."
+  exit 1
+fi
+echo "  ✓ Connected"
+
+
 # ─── HELPER: YES/NO PROMPT ────────────────────────────────────
 ask_consent() {
   local question=$1
@@ -247,9 +269,12 @@ echo "  ✓ Templates downloaded"
 echo ""
 echo "  ── Bootstrapping workspace in $WORKSPACE ────────────────"
 
-mkdir -p "$WORKSPACE/.rune/core"
-mkdir -p "$WORKSPACE/.rune/skills"
-mkdir -p "$WORKSPACE/.rune/memory"
+if ! mkdir -p "$WORKSPACE/.rune/core" \
+              "$WORKSPACE/.rune/skills" \
+              "$WORKSPACE/.rune/memory"; then
+  echo "  ✗ Cannot create .rune/ — check write permissions for: $WORKSPACE"
+  exit 1
+fi
 
 cp "$TMP_DIR/AGENTS.md"  "$CORE/AGENTS.md"
 cp "$TMP_DIR/persona.md" "$CORE/persona.md"
@@ -274,7 +299,7 @@ fi
 # Manage .gitignore
 GITIGNORE="$WORKSPACE/.gitignore"
 if ! grep -q "# rune - AI Workspace Configurations" "$GITIGNORE" 2>/dev/null; then
-  {
+  if {
     echo ""
     echo "# rune - AI Workspace Configurations"
     echo ".rune/core/"
@@ -285,8 +310,11 @@ if ! grep -q "# rune - AI Workspace Configurations" "$GITIGNORE" 2>/dev/null; th
     echo ".cursorrules"
     echo ".kiro/"
     echo ".agents/"
-  } >> "$GITIGNORE"
-  echo "  ✓ .gitignore updated"
+  } >> "$GITIGNORE" 2>/dev/null; then
+    echo "  ✓ .gitignore updated"
+  else
+    echo "  ⚠ Could not update .gitignore — add entries manually"
+  fi
 fi
 
 # ─── OPTIONAL SYSTEM TOOLS (BEFORE TOOL CONFIGURATION) ─────────
@@ -324,9 +352,12 @@ if [[ "$USE_G" =~ ^[Yy]$ ]]; then
       echo "    Upgrade from https://python.org then re-run setup.sh"
     else
       echo "  ✓ Python 3.$PY_VERSION found"
-      pip install graphifyy --quiet \
-        && echo "  ✓ graphify installed" \
-        || echo "  ✗ graphify install failed — run: pip install graphifyy"
+      if pip install graphifyy --quiet 2>/tmp/rune_pip_err_$$; then
+        echo "  ✓ graphify installed"
+      else
+        echo "  ✗ graphify failed: $(cat /tmp/rune_pip_err_$$ 2>/dev/null)"
+        echo "    Try manually: pip install graphifyy"
+      fi
       echo "  ℹ Run 'graphify install' inside each project to activate."
       printf "\n### Core System Tool: Graphify\nThis system is configured with Graphify. If you need to evaluate file hierarchies or map cross-module structural dependencies, execute the shell command \`graphify\` locally.\n" >> "$WORKSPACE/.rune/core/AGENTS.md"
     fi
